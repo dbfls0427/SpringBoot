@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="board.mapper.BoardMapper">
+	<select id="selectBoardList" resultType="board.dto.BoardDto">
+		<![CDATA[
+			SELECT
+				boardidx,
+				title,
+				hit_cnt,
+				created_datetime
+			FROM
+				t_board
+			WHERE
+				deleted_yn = 'N'
+			ORDER BY boardidx DESC
+		]]>
+	</select>
+	
+	<insert id="insertBoard" parameterType="board.dto.BoardDto">
+		<![CDATA[
+			INSERT INTO t_board
+			(
+			    boardidx,
+			    title, 
+				contents,
+				hit_cnt,  
+				created_datetime, 
+				creator_id,
+				deleted_yn
+			) 
+			VALUES 
+			(
+				board_idx_seq.nextval,
+				#{title}, 
+				#{contents},
+				0, 
+				sysdate, 
+				'admin',
+				'N'			
+			)
+		]]>
+	</insert>
+	
+	<select id="selectBoardDetail" parameterType="int" resultType="board.dto.BoardDto">
+		<![CDATA[
+			SELECT
+				boardidx,
+				title,
+				contents,
+				hit_cnt,
+				created_datetime,
+				creator_id
+			FROM
+				t_board
+			WHERE
+				boardidx = #{boardIdx}
+				AND deleted_yn = 'N'
+		]]>
+	</select>
+	
+	<update id="updateHitCount" parameterType="int">
+		<![CDATA[
+			UPDATE 
+				t_board 
+			SET 
+				hit_cnt = hit_cnt + 1 
+			WHERE 
+				boardidx = #{boardIdx}
+		]]>
+	</update>
+	
+	<update id="updateBoard" parameterType="board.dto.BoardDto">
+		<![CDATA[
+			UPDATE t_board SET 
+				title = #{title},
+				contents = #{contents},
+				updated_datetime = sysdate,
+				updater_id = 'admin'
+			WHERE 
+				boardidx = #{boardIdx}
+		]]>
+	</update>
+	
+	<update id="deleteBoard" parameterType="int">
+		<![CDATA[
+			UPDATE t_board SET 
+				deleted_yn = 'Y',
+				updated_datetime = sysdate,
+				updater_id = 'admin'
+			WHERE 
+				boardidx = #{boardIdx}
+		]]>
+	</update> 
+	
+	<insert id="insertBoardFileList" parameterType="board.dto.BoardFileDto">
+		<![CDATA[
+			INSERT INTO t_file
+			(
+				idx,
+				boardidx,
+				original_file_name,
+				stored_file_path,
+				file_size,
+				creator_id,
+				created_datetime
+			)
+			VALUES
+		]]>
+		<foreach collection="list" item="item" separator=",">
+			(
+				t_file_seq.nextval,
+				#{item.boardIdx},
+				#{item.originalFileName},
+				#{item.storedFilePath},
+				#{item.fileSize},
+				'admin',
+				sysdate
+			)
+		</foreach>
+	</insert>
+	
+	<select id="selectBoardFileList" parameterType="int" resultType="board.dto.BoardFileDto">
+		<![CDATA[
+			SELECT
+				idx,
+				boardidx,
+				original_file_name,
+				ROUND(file_size / 1024) AS file_size
+			FROM
+				t_file
+			WHERE
+				boardidx = #{boardIdx}
+				AND deleted_yn = 'N'
+		]]>
+	</select>
+	
+	<select id="selectBoardFileInformation" parameterType="map" resultType="board.dto.BoardFileDto">
+		<![CDATA[
+			SELECT
+				original_file_name,
+				stored_file_path,
+				file_size
+			FROM
+				t_file
+			WHERE
+				idx = #{idx}
+				AND boardidx = #{boardIdx}
+				AND deleted_yn = 'N'
+		]]>
+	</select>
+	
+	<select id="selectBoardIdx" resultType="int">
+		<![CDATA[
+			SELECT
+				MAX(boardidx)
+			FROM
+				t_board
+		]]>
+	</select>
+	
+</mapper>
